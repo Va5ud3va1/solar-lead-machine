@@ -4,6 +4,7 @@ import { getParam } from "../utils/params";
 
 export async function getLeads(req: Request, res: Response) {
   try {
+    console.log("DEBUG: Getting leads...");
     const leads = await prisma.lead.findMany({
       include: {
         assignedTo: { select: { id: true, name: true, email: true } },
@@ -11,9 +12,12 @@ export async function getLeads(req: Request, res: Response) {
       },
       orderBy: { createdAt: "desc" },
     });
+    console.log("DEBUG: Found", leads.length, "leads");
     res.json(leads);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch leads" });
+  } catch (error: any) {
+    console.error("DEBUG ERROR:", error.message);
+    console.error("DEBUG STACK:", error.stack);
+    res.status(500).json({ error: "Failed to fetch leads", details: error.message });
   }
 }
 
@@ -31,8 +35,9 @@ export async function getLead(req: Request, res: Response) {
     });
     if (!lead) return res.status(404).json({ error: "Lead not found" });
     res.json(lead);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch lead" });
+  } catch (error: any) {
+    console.error("DEBUG ERROR:", error.message);
+    res.status(500).json({ error: "Failed to fetch lead", details: error.message });
   }
 }
 
@@ -43,8 +48,9 @@ export async function createLead(req: Request, res: Response) {
       data: { customer, email, phone, city, assignedToId },
     });
     res.status(201).json(lead);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to create lead" });
+  } catch (error: any) {
+    console.error("DEBUG ERROR:", error.message);
+    res.status(500).json({ error: "Failed to create lead", details: error.message });
   }
 }
 
@@ -52,13 +58,11 @@ export async function updateLead(req: Request, res: Response) {
   try {
     const id = getParam(req.params.id);
     const data = req.body;
-    const lead = await prisma.lead.update({
-      where: { id },
-      data,
-    });
+    const lead = await prisma.lead.update({ where: { id }, data });
     res.json(lead);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update lead" });
+  } catch (error: any) {
+    console.error("DEBUG ERROR:", error.message);
+    res.status(500).json({ error: "Failed to update lead", details: error.message });
   }
 }
 
@@ -67,8 +71,9 @@ export async function deleteLead(req: Request, res: Response) {
     const id = getParam(req.params.id);
     await prisma.lead.delete({ where: { id } });
     res.json({ message: "Lead deleted" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete lead" });
+  } catch (error: any) {
+    console.error("DEBUG ERROR:", error.message);
+    res.status(500).json({ error: "Failed to delete lead", details: error.message });
   }
 }
 
@@ -76,13 +81,11 @@ export async function assignLead(req: Request, res: Response) {
   try {
     const id = getParam(req.params.id);
     const { assignedToId } = req.body;
-    const lead = await prisma.lead.update({
-      where: { id },
-      data: { assignedToId },
-    });
+    const lead = await prisma.lead.update({ where: { id }, data: { assignedToId } });
     res.json(lead);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to assign lead" });
+  } catch (error: any) {
+    console.error("DEBUG ERROR:", error.message);
+    res.status(500).json({ error: "Failed to assign lead", details: error.message });
   }
 }
 
@@ -90,12 +93,10 @@ export async function updateLeadStatus(req: Request, res: Response) {
   try {
     const id = getParam(req.params.id);
     const { status } = req.body;
-    const lead = await prisma.lead.update({
-      where: { id },
-      data: { status },
-    });
+    const lead = await prisma.lead.update({ where: { id }, data: { status } });
     res.json(lead);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update status" });
+  } catch (error: any) {
+    console.error("DEBUG ERROR:", error.message);
+    res.status(500).json({ error: "Failed to update status", details: error.message });
   }
 }
