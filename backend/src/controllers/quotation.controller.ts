@@ -1,127 +1,55 @@
-import { Response } from "express";
-import { QuotationStatus } from "@prisma/client";
+import { Request, Response } from "express";
+import { prisma } from "../prisma/client";
+import { getParam } from "../utils/params";
 
-import {
-  createQuotation,
-  getLeadQuotations,
-  updateQuotationStatus,
-} from "../services/quotation.service";
-
-import { AuthRequest } from "../middlewares/auth.middleware";
-
-
-// POST /api/leads/:leadId/quotations
-export const createQuotationController = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export async function createQuotation(req: Request, res: Response) {
   try {
-    const { leadId } = req.params;
-    const { systemSize, amount, validUntil } = req.body;
-
-    if (!systemSize || !amount) {
-      res.status(400).json({
-        message: "System size and amount are required",
-      });
-      return;
-    }
-
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      res.status(401).json({
-        message: "User not authenticated",
-      });
-      return;
-    }
-
-    const quotation = await createQuotation(
-      leadId,
-      Number(systemSize),
-      Number(amount),
-      validUntil ? new Date(validUntil) : undefined,
-      userId
-    );
-
+    const leadId = getParam(req.params.leadId);
+    const { quotationNo, amount, validity, status } = req.body;
+    const userId = (req as any).user?.id || "system"; // fallback if no auth middleware
+    
+    const quotation = await prisma.quotation.create({
+      data: { 
+        quotationNo, 
+        leadId, 
+        amount: parseFloat(amount), 
+        validity: new Date(validity), 
+        status: status || "PENDING", 
+        userId 
+      },
+    });
+    
     res.status(201).json(quotation);
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to create quotation",
-    });
+    res.status(500).json({ error: "Failed to create quotation" });
   }
-};
+}
 
-
-// GET /api/leads/:leadId/quotations
-export const getQuotations = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export async function getLeadQuotations(req: Request, res: Response) {
   try {
-    const { leadId } = req.params;
-
-    const quotations = await getLeadQuotations(leadId);
-
-    res.status(200).json(quotations);
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to fetch quotations",
+    const leadId = getParam(req.params.leadId);
+    const quotations = await prisma.quotation.findMany({
+      where: { leadId },
+      orderBy: { createdAt: "desc" },
     });
+    res.json(quotations);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch quotations" });
   }
-};
+}
 
-
-// PATCH /api/quotations/:id/status
-export const updateQuotationStatusController = async (
-  req: AuthRequest,
-  res: Response
-): Promise<void> => {
+export async function updateQuotation(req: Request, res: Response) {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!status) {
-      res.status(400).json({
-        message: "Quotation status is required",
-      });
-      return;
-    }
-
-    const validStatuses = Object.values(QuotationStatus);
-
-    if (!validStatuses.includes(status)) {
-      res.status(400).json({
-        message: "Invalid quotation status",
-        allowedStatuses: validStatuses,
-      });
-      return;
-    }
-
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      res.status(401).json({
-        message: "User not authenticated",
-      });
-      return;
-    }
-
-    const quotation = await updateQuotationStatus(
-      id,
-      status,
-      userId
-    );
-
-    res.status(200).json(quotation);
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Failed to update quotation status",
+    const id = getParam(req.params.id);
+    const data = req.body;
+    
+    const quotation = await prisma.quotation.update({
+      where: { id },
+      data,
     });
+    
+    res.json(quotation);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update quotation" });
   }
-};
+}
