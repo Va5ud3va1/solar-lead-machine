@@ -1,0 +1,64 @@
+<div class="modal-overlay" (click)="close()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Add New Lead</h2>
+      <button class="close-btn" (click)="close()">✕</button>
+    </div>
+
+    <form (ngSubmit)="addLead()" class="form">
+      <div class="form-group">
+        <label for="customer">Customer Name *</label>
+        <input
+          id="customer"
+          type="text"
+          [(ngModel)]="customer"
+          name="customer"
+          required
+          placeholder="Enter customer name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone *</label>
+        <input
+          id="phone"
+          type="tel"
+          [(ngModel)]="phone"
+          name="phone"
+          required
+          placeholder="Enter phone number"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status</label>
+        <select
+          id="status"
+          [(ngModel)]="status"
+          name="status"
+        >
+          <option *ngFor="let s of statuses" [value]="s">
+            {{ s }}
+          </option>
+        </select>
+      </div>
+
+      @if (error) {
+        <div class="error-message">{{ error }}</div>
+      }
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="close()">
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="btn-submit"
+          [disabled]="loading || !customer || !phone"
+        >
+          {{ loading ? 'Adding...' : 'Add Lead' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

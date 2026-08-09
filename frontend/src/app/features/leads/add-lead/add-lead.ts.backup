@@ -1,0 +1,58 @@
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { LeadService } from '../../../core/services/lead';
+
+@Component({
+  selector: 'app-add-lead',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './add-lead.html',
+  styleUrl: './add-lead.css'
+})
+export class AddLead implements OnInit {
+  @Output() leadAdded = new EventEmitter<void>();
+  @Output() closed = new EventEmitter<void>();
+
+  customer = '';
+  phone = '';
+  status = 'NEW';
+  error = '';
+  loading = false;
+
+  statuses = ['NEW', 'CONTACTED', 'WON', 'LOST'];
+
+  constructor(private leadService: LeadService) {}
+
+  ngOnInit(): void {}
+
+  addLead(): void {
+    this.error = '';
+    this.loading = true;
+
+    const newLead = {
+      customer: this.customer,
+      phone: this.phone,
+      status: this.status,
+      assignedToId: null
+    };
+
+    this.leadService.createLead(newLead).subscribe({
+      next: (response) => {
+        console.log('Lead created:', response);
+        this.loading = false;
+        this.leadAdded.emit();
+        this.close();
+      },
+      error: (error) => {
+        console.error('Error creating lead:', error);
+        this.error = error.error?.message || 'Failed to create lead';
+        this.loading = false;
+      }
+    });
+  }
+
+  close(): void {
+    this.closed.emit();
+  }
+}

@@ -1,0 +1,354 @@
+
+import { Request, Response } from "express";
+import prisma from "../prisma/client";
+import { ActivityType, LeadStatus } from "@prisma/client";
+import { AuthRequest } from "../middlewares/auth.middleware";
+import { createActivity } from "../services/activity.service";
+
+export const getAllLeads = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+  const search = (req.query.search as string)?.trim();
+
+  const leads = await prisma.lead.findMany({
+    where: search
+      ? {
+          OR: [
+            {
+              customer: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+            {
+              phone: {
+                contains: search,
+              },
+            },
+            {
+              city: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          ],
+        }
+      : undefined,
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  res.json(leads);
+} catch (error) {
+  console.error(error);
+
+  res.status(500).json({
+    message: "Failed to fetch leads",
+  });
+}
+};
+export const createLead = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { customer, email, phone, city, status } = req.body;
+    const userId = (req as AuthRequest).user?.userId;
+
+    if (!customer || !phone) {
+      res.status(400).json({
+        message: "Customer and phone are required",
+      });
+      return;
+    }
+
+    const lead = await prisma.lead.create({
+      data: {
+        customer,
+        email,
+        phone,
+        city,
+        ...(status && { status }),
+      },
+    });
+
+    if (userId) {
+      await createActivity(
+        ActivityType.LEAD_CREATED,
+        `Lead created for ${customer}`,
+        lead.id,
+        userId
+      );
+    }
+
+    res.status(201).json(lead);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to create lead",
+    });
+  }
+};
+
+export const getLeadById = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+
+    const lead = await prisma.lead.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!lead) {
+      res.status(404).json({
+        message: "Lead not found",
+      });
+      return;
+    }
+
+    res.json(lead);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to fetch lead",
+    });
+  }
+};
+
+export const updateLeadStatus = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    if (!status) {
+      res.status(400).json({
+        message: "Status is required",
+      });
+      return;
+    }
+
+    const validStatuses = Object.values(LeadStatus);
+
+    if (!validStatuses.includes(status)) {
+      res.status(400).json({
+        message: "Invalid lead status",
+        allowedStatuses: validStatuses,
+      });
+      return;
+    }
+
+    const oldLead = await prisma.lead.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!oldLead) {
+      res.status(404).json({
+        message: "Lead not found",
+      });
+      return;
+    }
+
+    const lead = await prisma.lead.update({
+      where: {
+        id,
+      },
+      data: {
+        status,
+      },
+    });
+
+    await createActivity(
+      ActivityType.STATUS_CHANGED,
+      `Status changed from ${oldLead.status} to ${status}`,
+      lead.id,
+      userId
+    );
+
+    res.json(lead);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to update lead status",
+    });
+  }
+};
+
+export const updateLead = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { customer, email, phone, city, status } = req.body;
+
+    if (!id) {
+      res.status(400).json({
+        message: "Lead ID is required",
+      });
+      return;
+    }
+
+    const lead = await prisma.lead.update({
+      where: { id },
+      data: {
+        ...(customer && { customer }),
+        ...(email && { email }),
+        ...(phone && { phone }),
+        ...(city && { city }),
+        ...(status && { status }),
+      },
+    });
+
+    res.json(lead);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to update lead",
+    });
+  }
+};
+
+export const deleteLead = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    await prisma.lead.delete({
+      where: { id },
+    });
+
+    res.json({ message: "Lead deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to delete lead",
+    });
+  }
+};
+
+export const assignLead = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const { userId: assignedUserId } = req.body;
+    const currentUserId = req.user?.userId;
+
+    if (!currentUserId) {
+      res.status(401).json({
+        message: "Unauthorized",
+      });
+      return;
+    }
+
+    if (!assignedUserId) {
+      res.status(400).json({
+        message: "User ID is required",
+      });
+      return;
+    }
+
+    const assignedUser = await prisma.user.findUnique({
+      where: {
+        id: assignedUserId,
+      },
+    });
+
+    if (!assignedUser) {
+      res.status(404).json({
+        message: "Assigned user not found",
+      });
+      return;
+    }
+
+    const lead = await prisma.lead.update({
+      where: {
+        id,
+      },
+      data: {
+        assignedToId: assignedUserId,
+      },
+      include: {
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    await createActivity(
+      ActivityType.LEAD_ASSIGNED,
+      `Lead assigned to ${assignedUser.name}`,
+      lead.id,
+      currentUserId
+    );
+
+    res.json(lead);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to assign lead",
+    });
+  }
+};
+
+export const getMyLeads = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const userId = req.user?.userId;
+
+    const leads = await prisma.lead.findMany({
+      where: {
+        assignedToId: userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.json(leads);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to fetch my leads",
+    });
+  }
+};

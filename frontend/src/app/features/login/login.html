@@ -1,0 +1,121 @@
+<div class="login-container">
+  <!-- Animated Background Orbs -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <!-- Main Card Container -->
+  <div class="card-container">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="solar-icon">☀️</div>
+      <h1>
+        <span class="header-main">Solar Lead</span>
+        <span class="header-sub">Machine</span>
+      </h1>
+      <div class="header-tag">Agent Authentication</div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="card-glow">
+      <!-- Error Message -->
+      <div class="error-message" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <!-- Success Message -->
+      <div class="success-message" *ngIf="successMessage">
+        {{ successMessage }}
+      </div>
+
+      <!-- Login Form -->
+      <form (ngSubmit)="onLogin()" #loginForm="ngForm">
+        
+        <!-- Email Field -->
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            class="glow-input"
+            placeholder="agent@solar.com"
+            [(ngModel)]="email"
+            name="email"
+            required
+          />
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="password-container">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              id="password"
+              class="glow-input"
+              placeholder="••••••••"
+              [(ngModel)]="password"
+              name="password"
+              required
+            />
+            <button
+              type="button"
+              (click)="togglePasswordVisibility()"
+              class="toggle-password"
+            >
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember Me & Forgot Password -->
+        <div class="form-row">
+          <div class="checkbox-wrapper">
+            <input
+              type="checkbox"
+              id="remember"
+              name="remember"
+              [(ngModel)]="rememberMe"
+            />
+            <label for="remember">Remember me</label>
+          </div>
+          <a href="#" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <!-- Login Button -->
+        <button
+          type="submit"
+          class="neon-button"
+          [disabled]="isLoading || loginForm.invalid"
+        >
+          <span *ngIf="!isLoading">Initialize Session</span>
+          <span *ngIf="isLoading" class="button-loading">
+            <span class="spinner"></span>Initializing...
+          </span>
+        </button>
+
+        <!-- Divider -->
+        <div class="divider-container">
+          <div class="divider-line"></div>
+          <span class="divider-text">OR</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <!-- SSO Button -->
+        <button type="button" class="sso-button">
+          Continue with Google
+        </button>
+
+      </form>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p>Don't have an account? <a href="#">Contact your administrator</a></p>
+        <div class="footer-divider">
+          © 2024 Solar Lead Machine. All rights reserved.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

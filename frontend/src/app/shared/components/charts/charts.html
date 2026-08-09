@@ -1,0 +1,39 @@
+<div class="charts-container">
+  <h3 class="charts-title" *ngIf="title">{{ title }}</h3>
+  <div *ngIf="type === 'doughnut' && total > 0" class="doughnut-wrapper">
+    <svg viewBox="0 0 200 200" class="doughnut-svg">
+      <circle cx="100" cy="100" r="70" fill="none" stroke="#252d4a" stroke-width="1"/>
+      <path *ngFor="let segment of getDoughnutSegments(); let i = index"
+        [attr.d]="segment.path" [attr.fill]="segment.color" class="doughnut-segment"
+        [class.hovered]="hoveredIndex === i" (mouseenter)="hoveredIndex = i"
+        (mouseleave)="hoveredIndex = null"
+        (mousemove)="showTooltip($event, segment.label, segment.value, segment.percentage)" />
+      <text x="100" y="95" text-anchor="middle" class="center-label">Total</text>
+      <text x="100" y="118" text-anchor="middle" class="center-value">{{ total }}</text>
+    </svg>
+    <div class="chart-legend">
+      <div *ngFor="let item of data; let i = index" class="legend-item"
+        [class.hovered]="hoveredIndex === i" (mouseenter)="hoveredIndex = i" (mouseleave)="hoveredIndex = null">
+        <span class="legend-dot" [style.backgroundColor]="item.color"></span>
+        <span class="legend-label">{{ item.label }}</span>
+        <span class="legend-value">{{ item.value }}</span>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="type === 'bar' && total > 0" class="bar-wrapper">
+    <div class="bar-chart">
+      <div *ngFor="let item of data; let i = index" class="bar-group">
+        <div class="bar-track">
+          <div class="bar-fill" [style.height.%]="(item.value / getBarMax()) * 100"
+            [style.backgroundColor]="item.color" [class.hovered]="hoveredIndex === i"
+            (mouseenter)="hoveredIndex = i; showTooltip($event, item.label, item.value, getBarPercentage(item.value))"
+            (mouseleave)="hoveredIndex = null; hideTooltip()"></div>
+        </div>
+        <span class="bar-label">{{ item.label }}</span>
+        <span class="bar-value">{{ item.value }}</span>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="total === 0" class="chart-empty"><p>No data available</p></div>
+  <div *ngIf="tooltip" class="chart-tooltip" [style.left.px]="tooltip.x" [style.top.px]="tooltip.y">{{ tooltip.text }}</div>
+</div>

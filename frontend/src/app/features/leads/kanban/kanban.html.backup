@@ -1,0 +1,123 @@
+<div class="kanban-container">
+  <!-- Error Message -->
+  <div *ngIf="error" class="error-banner">
+    <span>⚠️ {{ error }}</span>
+    <button (click)="loadLeads()">Retry</button>
+  </div>
+
+  <!-- Header Section -->
+  <div class="kanban-header">
+    <div class="header-content">
+      <h1>Solar Lead Machine</h1>
+      <p>Manage your solar leads</p>
+    </div>
+    <div class="header-right">
+      <span class="admin-badge">Admin</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading leads...</p>
+  </div>
+
+  <!-- Main Content (shown when not loading) -->
+  <div *ngIf="!loading" class="main-content">
+    <!-- Metrics Section -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-value">{{ metrics.totalLeads }}</div>
+        <div class="metric-label">TOTAL LEADS</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">{{ metrics.newLeads }}</div>
+        <div class="metric-label">NEW LEADS</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">{{ metrics.contacted }}</div>
+        <div class="metric-label">CONTACTED</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">{{ metrics.won }}</div>
+        <div class="metric-label">WON</div>
+      </div>
+    </div>
+
+    <!-- Kanban Board Section -->
+    <div class="kanban-board">
+      <h2 class="board-title">Lead Pipeline</h2>
+
+      <div class="columns-container">
+        <!-- Kanban Columns -->
+        <div *ngFor="let column of columns" class="kanban-column">
+          <!-- Column Header -->
+          <div class="column-header" [style.borderTopColor]="column.accentColor">
+            <h3>{{ column.title }}</h3>
+            <span class="column-count" [style.backgroundColor]="column.accentColor">
+              {{ column.count }}
+            </span>
+          </div>
+
+          <!-- Drop Zone -->
+          <div
+            cdkDropList
+            [id]="column.id"
+            [attr.data]="getLeadsByStatus(column.status)"
+            class="drop-zone"
+            [class.disabled]="updating"
+            (cdkDropListDropped)="drop($event, column.status)"
+          >
+            <!-- Lead Cards -->
+            <div
+              *ngFor="let lead of getLeadsByStatus(column.status)"
+              cdkDrag
+              class="lead-card"
+              [style.borderLeftColor]="column.accentColor"
+              [class.dragging]="updating"
+            >
+              <!-- Card Header -->
+              <div class="card-header">
+                <h4>{{ lead.name }}</h4>
+                <span class="status-badge" [style.backgroundColor]="column.accentColor">
+                  {{ column.title }}
+                </span>
+              </div>
+
+              <!-- Card Body -->
+              <div class="card-body">
+                <div class="card-field">
+                  <span class="field-label">Phone:</span>
+                  <span class="field-value">{{ lead.phone }}</span>
+                </div>
+                <div class="card-field" *ngIf="lead.createdAt">
+                  <span class="field-label">Created:</span>
+                  <span class="field-value">{{ lead.createdAt }}</span>
+                </div>
+              </div>
+
+              <!-- Card Actions -->
+              <div class="card-actions">
+                <button class="action-btn" title="View Details">👁️</button>
+                <button class="action-btn" title="Edit">✏️</button>
+                <button class="action-btn" title="Delete">🗑️</button>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="getLeadsByStatus(column.status).length === 0" class="empty-state">
+              <p>No leads here</p>
+              <small>Drag leads here to move them</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Updating Overlay -->
+  <div *ngIf="updating" class="updating-overlay">
+    <div class="spinner"></div>
+    <p>Updating lead...</p>
+  </div>
+</div>

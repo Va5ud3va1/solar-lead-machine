@@ -1,0 +1,305 @@
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
+
+import {
+  LeadService,
+  Lead,
+  LeadStatus
+} from '../../../core/services/lead';
+
+interface Column {
+  id: string;
+  title: string;
+  status: LeadStatus;
+  count: number;
+  accentColor: string;
+}
+
+@Component({
+  selector: 'app-kanban',
+  standalone: true,
+  imports: [CommonModule, DragDropModule, FormsModule],
+  templateUrl: './kanban.html',
+  styleUrls: ['./kanban.css'],
+})
+export class KanbanComponent implements OnInit, OnDestroy {
+
+  leads: Lead[] = [];
+
+  columns: Column[] = [];
+
+  metrics = {
+    totalLeads: 0,
+    newLeads: 0,
+    contacted: 0,
+    won: 0,
+  };
+
+  loading = true;
+  updating = false;
+  error = '';
+
+  searchText = '';
+  selectedStatus = 'ALL';
+  sortOption = 'NEWEST';
+
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private leadService: LeadService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.loadLeads();
+  }
+
+  loadLeads(): void {
+
+    this.loading = true;
+
+    this.leadService
+      .filterLeads(
+        this.searchText,
+        this.selectedStatus
+      )
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+
+        next: (data: Lead[]) => {
+
+          this.leads = data;
+
+          this.sortLeads();
+
+          this.initializeColumns();
+
+          this.updateMetrics();
+
+          this.loading = false;
+
+          this.cdr.detectChanges();
+
+        },
+
+        error: (err) => {
+
+          console.error(err);
+
+          this.error = 'Failed to load leads';
+
+          this.loading = false;
+
+          this.cdr.detectChanges();
+
+        }
+
+      });
+
+  }
+
+  onSearch(): void {
+    this.loadLeads();
+  }
+
+  onSortChange(): void {
+    this.sortLeads();
+  }
+
+  private sortLeads(): void {
+
+    switch (this.sortOption) {
+
+      case 'NEWEST':
+        this.leads.sort(
+          (a, b) =>
+            new Date(b.createdAt ?? '').getTime() -
+            new Date(a.createdAt ?? '').getTime()
+        );
+        break;
+
+      case 'OLDEST':
+        this.leads.sort(
+          (a, b) =>
+            new Date(a.createdAt ?? '').getTime() -
+            new Date(b.createdAt ?? '').getTime()
+        );
+        break;
+
+      case 'NAME_ASC':
+        this.leads.sort(
+          (a, b) => a.customer.localeCompare(b.customer)
+        );
+        break;
+
+      case 'NAME_DESC':
+        this.leads.sort(
+          (a, b) => b.customer.localeCompare(a.customer)
+        );
+        break;
+    }
+  }
+
+  initializeColumns(): void {
+
+    this.columns = [
+      {
+        id: 'new',
+        title: 'New',
+        status: 'NEW',
+        count: 0,
+        accentColor: '#00ff88',
+      },
+      {
+        id: 'contacted',
+        title: 'Contacted',
+        status: 'CONTACTED',
+        count: 0,
+        accentColor: '#00d4ff',
+      },
+      {
+        id: 'won',
+        title: 'Won',
+        status: 'WON',
+        count: 0,
+        accentColor: '#ffd700',
+      },
+      {
+        id: 'lost',
+        title: 'Lost',
+        status: 'LOST',
+        count: 0,
+        accentColor: '#ff1744',
+      },
+    ];
+
+    this.updateColumnCounts();
+  }
+
+  updateColumnCounts(): void {
+    this.columns.forEach(col => {
+      col.count = this.leads.filter(
+        lead => lead.status === col.status
+      ).length;
+    });
+  }
+
+  getLeadsByStatus(status: LeadStatus): Lead[] {
+    return this.leads.filter(
+      lead => lead.status === status
+    );
+  }
+
+  updateMetrics(): void {
+
+    this.metrics.totalLeads = this.leads.length;
+
+    this.metrics.newLeads =
+      this.leads.filter(l => l.status === 'NEW').length;
+
+    this.metrics.contacted =
+      this.leads.filter(l => l.status === 'CONTACTED').length;
+
+    this.metrics.won =
+      this.leads.filter(l => l.status === 'WON').length;
+
+  }
+
+  drop(
+    event: CdkDragDrop<Lead[]>,
+    newStatus: LeadStatus
+  ): void {
+
+    if (event.previousContainer === event.container) {
+      return;
+    }
+
+    const lead =
+      event.previousContainer.data[event.previousIndex];
+
+    if (lead.status === newStatus) {
+      return;
+    }
+
+    this.updating = true;
+
+    const previousStatus = lead.status;
+
+    const updatedLead = {
+      ...lead,
+      status: newStatus,
+    };
+
+    this.leads = this.leads.map(l =>
+      l.id === lead.id ? updatedLead : l
+    );
+
+    this.updateColumnCounts();
+    this.updateMetrics();
+
+    this.cdr.detectChanges();
+
+    this.leadService
+      .updateLeadStatus(
+        lead.id,
+        newStatus
+      )
+      .subscribe({
+
+        next: (result) => {
+
+          this.leads = this.leads.map(l =>
+            l.id === result.id ? result : l
+          );
+
+          this.updateColumnCounts();
+          this.updateMetrics();
+
+          this.updating = false;
+
+          this.cdr.detectChanges();
+
+        },
+
+        error: (err) => {
+
+          console.error(err);
+
+          this.leads = this.leads.map(l =>
+            l.id === lead.id
+              ? {
+                  ...lead,
+                  status: previousStatus,
+                }
+              : l
+          );
+
+          this.updateColumnCounts();
+          this.updateMetrics();
+
+          this.error =
+            'Failed to update status';
+
+          this.updating = false;
+
+          this.cdr.detectChanges();
+
+        }
+
+      });
+
+  }
+
+  ngOnDestroy(): void {
+
+    this.destroy$.next();
+
+    this.destroy$.complete();
+
+  }
+
+}

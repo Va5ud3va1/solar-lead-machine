@@ -1,0 +1,107 @@
+<div class="get-quote-container">
+  <div class="quote-wrapper">
+    <div class="quote-header">
+      <div class="logo-section">
+        <h1 class="company-name">GG POWER</h1>
+        <p class="tagline">Solar Energy Solutions</p>
+      </div>
+      <p class="subtitle">Get Your Free Solar Quote Today</p>
+      <p class="description">Join thousands of satisfied customers saving on energy costs with GG POWER</p>
+    </div>
+
+    @if (success) {
+      <div class="success-message">
+        <h3>✓ Thank You!</h3>
+        <p>Your solar quote request has been submitted successfully.</p>
+        <p>The GG POWER team will contact you within 24 hours at {{ phone }}</p>
+        <p class="small">We're excited to help you save with solar energy!</p>
+      </div>
+    }
+
+    @if (!success) {
+      <form (ngSubmit)="submitForm()" class="quote-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Full Name *</label>
+            <input
+              id="name"
+              type="text"
+              [(ngModel)]="name"
+              name="name"
+              required
+              placeholder="suresh"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input
+              id="email"
+              type="email"
+              [(ngModel)]="email"
+              name="email"
+              required
+              placeholder="suresh@example.com"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Phone *</label>
+            <input
+              id="phone"
+              type="tel"
+              [(ngModel)]="phone"
+              name="phone"
+              required
+              placeholder="(+91) 8756214569"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="city">City *</label>
+            <input
+              id="city"
+              type="text"
+              [(ngModel)]="city"
+              name="city"
+              required
+              placeholder="Karaikudi"
+            />
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="interest">What interests you? *</label>
+          <select
+            id="interest"
+            [(ngModel)]="interest"
+            name="interest"
+            required
+          >
+            <option value="">Select your interest</option>
+            <option value="residential">Residential Solar Panels</option>
+            <option value="commercial">Commercial Solar Solutions</option>
+            <option value="battery">Solar + Battery Storage</option>
+            <option value="information">Just Getting Information</option>
+          </select>
+        </div>
+
+        @if (error) {
+          <div class="error-message">{{ error }}</div>
+        }
+
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="loading || !name || !email || !phone || !city || !interest"
+        >
+          {{ loading ? 'Submitting...' : 'Get Your Free Quote' }}
+        </button>
+
+        <p class="disclaimer">✓ No credit card required • ✓ Free quote in 24 hours • ✓ No obligations</p>
+      </form>
+    }
+  </div>
+</div>

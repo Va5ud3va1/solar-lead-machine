@@ -1,0 +1,106 @@
+import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ActivityService } from '../../services/activity.service';
+
+@Component({
+  selector: 'app-activity-timeline',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="timeline">
+      <h3>Activity Timeline</h3>
+      <div class="loading" *ngIf="loading"><div class="spinner"></div><p>Loading...</p></div>
+      <div class="error" *ngIf="error && !loading"><p>⚠️ {{error}}</p><button (click)="load()">Retry</button></div>
+      <div class="items" *ngIf="!loading && !error && items.length; else empty">
+        <div class="item" *ngFor="let i of items">
+          <div *ngIf="i.type" class="activity">
+            <span class="badge" [class]="i.type.toLowerCase()">{{i.type.replace(/_/g,' ')}}</span>
+            <span class="time">{{i.createdAt|date:'short'}}</span>
+            <p *ngIf="i.details">{{i.details}}</p>
+            <small>by {{i.user?.name||'Unknown'}}</small>
+          </div>
+          <div *ngIf="i.content" class="note">
+            <span class="badge note">NOTE</span>
+            <span class="time">{{i.createdAt|date:'short'}}</span>
+            <p>{{i.content}}</p>
+            <small>by {{i.user?.name||'Unknown'}}</small>
+          </div>
+        </div>
+      </div>
+      <ng-template #empty><p class="empty" *ngIf="!loading && !error">No activity yet</p></ng-template>
+    </div>
+  `,
+  styles: [`
+    .timeline { padding: 16px; background: rgba(30,41,59,0.5); border-radius: 12px; margin-top: 16px; }
+    h3 { margin: 0 0 12px; color: #e2e8f0; }
+    .loading { text-align: center; padding: 20px; }
+    .spinner { width: 30px; height: 30px; border: 3px solid #334155; border-top-color: #06b6d4; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { text-align: center; padding: 20px; color: #ef4444; }
+    .error button { margin-top: 10px; padding: 6px 16px; background: #334155; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
+    .items { display: flex; flex-direction: column; gap: 10px; }
+    .item { padding-left: 16px; border-left: 2px solid #334155; position: relative; }
+    .item::before { content: ''; position: absolute; left: -5px; top: 2px; width: 8px; height: 8px; border-radius: 50%; background: #06b6d4; }
+    .badge { padding: 2px 8px; border-radius: 4px; font-size: .65rem; font-weight: 700; text-transform: uppercase; margin-right: 8px; }
+    .status_changed { background: #f59e0b; color: #000; }
+    .lead_created { background: #10b981; color: #000; }
+    .note_added { background: #8b5cf6; color: #fff; }
+    .note { background: #6366f1; color: #fff; }
+    .time { font-size: .75rem; color: #94a3b8; }
+    p { margin: 4px 0; color: #cbd5e1; font-size: .85rem; }
+    small { color: #64748b; font-size: .75rem; }
+    .empty { text-align: center; color: #64748b; padding: 16px; }
+  `]
+})
+export class ActivityTimelineComponent implements OnInit {
+  @Input() leadId!: string;
+  items: any[] = [];
+  loading = false;
+  error: string | null = null;
+
+  constructor(
+    private svc: ActivityService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit() {
+    if (this.leadId) {
+      this.load();
+    }
+  }
+
+  load() {
+    this.loading = true;
+    this.error = null;
+    this.cdr.detectChanges(); // Force update for loading state
+
+    this.svc.getActivities(this.leadId).subscribe({
+      next: (res: any) => {
+        const activities = res.data || res;
+        this.svc.getNotes(this.leadId).subscribe({
+          next: (res2: any) => {
+            const notes = res2.data || res2;
+            this.items = [
+              ...activities.map((x: any) => ({...x, sort: new Date(x.createdAt)})),
+              ...notes.map((x: any) => ({...x, sort: new Date(x.createdAt)}))
+            ].sort((a, b) => b.sort.getTime() - a.sort.getTime());
+            this.loading = false;
+            this.cdr.detectChanges(); // Force update after data loads
+          },
+          error: (err: any) => {
+            console.error('Notes error:', err);
+            this.error = 'Failed to load notes';
+            this.loading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      },
+      error: (err: any) => {
+        console.error('Activities error:', err);
+        this.error = 'Failed to load activities';
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+}

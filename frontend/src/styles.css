@@ -1,0 +1,82 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  padding: 1rem;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.brand-header {
+  text-align: center;
+}
+
+.logo-text {
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-cyan);
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-group label {
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.input-group input {
+  background-color: var(--bg-main);
+  border: 1px solid var(--border-muted);
+  color: var(--text-primary);
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  outline: none;
+}
+
+.input-group input:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
+}
+
+.input-group input::placeholder {
+  color: var(--text-muted);
+}
+
+.login-btn {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 1rem;
+  font-size: 1rem;
+}
