@@ -1,4 +1,4 @@
-import { prisma } from "../prisma/client";
+import { prisma } from "../generated/prisma";
 
 export async function getDashboardStats() {
   const totalLeads = await prisma.lead.count();

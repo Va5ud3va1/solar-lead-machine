@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { prisma } from "../prisma/client";
+import { prisma } from "../generated/prisma";
 import { getParam } from "../utils/params";
 
 export async function createQuotation(req: Request, res: Response) {

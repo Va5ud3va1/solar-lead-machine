@@ -1,4 +1,4 @@
-import { prisma } from "../prisma/client";
+import { prisma } from "../generated/prisma";
 
 export async function createQuotation(data: {
   quotationNo: string;

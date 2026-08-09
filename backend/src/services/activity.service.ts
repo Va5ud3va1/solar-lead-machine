@@ -1,4 +1,4 @@
-import { prisma } from "../prisma/client";
+import { prisma } from "../generated/prisma";
 import { ActivityType } from "../types/activity";
 
 export const createActivity = async (
