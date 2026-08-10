@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://solar-lead-machine.onrender.com/api'
+  apiUrl: 'https://your-production-api.com/api'
 };
