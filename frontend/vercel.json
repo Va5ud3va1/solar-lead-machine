@@ -1,3 +1,5 @@
 {
-  "outputDirectory": "dist/frontend/browser"
+  "buildCommand": "ng build --configuration production",
+  "outputDirectory": "dist/frontend/browser",
+  "framework": "angular"
 }
