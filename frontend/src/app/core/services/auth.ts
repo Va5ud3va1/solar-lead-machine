@@ -18,7 +18,7 @@ interface LoginResponse {
 })
 export class Auth {
 
-  private apiUrl = 'http://localhost:3000/api/auth';
+  private apiUrl = 'https://solar-lead-machine.onrender.com/api/auth';
 
   constructor(
     private http: HttpClient

@@ -7,7 +7,7 @@ import { ActivityService, Activity, Note } from './activity.service';
 describe('ActivityService', () => {
   let service: ActivityService;
   let httpMock: HttpTestingController;
-  const apiUrl = 'http://localhost:3000/api/leads';
+  const apiUrl = 'https://solar-lead-machine.onrender.com/api/leads';
 
   beforeEach(() => {
     TestBed.configureTestingModule({
