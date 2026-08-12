@@ -68,11 +68,11 @@ export class LeadService {
   }
 
   updateLeadStatus(id: string, status: LeadStatus): Observable<Lead> {
-    return this.http.patch<Lead>(`${this.apiUrl}/${id}/status`, { status });
+    return this.http.put<Lead>(`${this.apiUrl}/${id}/status`, { status });
   }
 
   updateLead(id: string, data: Partial<Lead>): Observable<Lead> {
-    return this.http.patch<Lead>(`${this.apiUrl}/${id}`, data);
+    return this.http.put<Lead>(`${this.apiUrl}/${id}`, data);
   }
 
   deleteLead(id: string): Observable<void> {

@@ -1,23 +1,23 @@
 <div class="kanban-container">
   <app-toast></app-toast>
   <app-add-lead *ngIf="addLeadOpen" [leadToEdit]="leadToEdit" (leadAdded)="onLeadAdded()" (leadUpdated)="onLeadUpdated()" (closed)="closeAddLead()"></app-add-lead>
-  <div *ngIf="error" class="error-banner"><span>⚠️ {{ error }}</span><button (click)="loadLeads()">Retry</button></div>
+  <div *ngIf="error" class="error-banner"><span>&#9888; {{ error }}</span><button (click)="loadLeads()">Retry</button></div>
   <div class="kanban-header">
     <div class="header-content"><h1>Solar Lead Machine</h1><p>Manage your solar leads</p></div>
     <div class="header-right">
       <button class="btn-add-lead" (click)="openAddLead()"><span>+</span> Add Lead</button>
       <span class="admin-badge">Admin</span>
-      <button class="btn-logout" (click)="logout()">🚪 Logout</button>
+      <button class="btn-logout" (click)="logout()">&#128682; Logout</button>
     </div>
   </div>
   <div *ngIf="loading" class="loading-container"><div class="spinner"></div><p>Loading leads...</p></div>
   <div class="search-bar-container">
-  <div class="search-bar">
-    <span class="search-icon">&#128269;</span>
-    <input type="text" placeholder="Search by customer, phone or city..." [(ngModel)]="searchText" (input)="onSearch()">
-    <button *ngIf="searchText" class="clear-btn" (click)="searchText=''; onSearch()">&#10005;</button>
+    <div class="search-bar">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" placeholder="Search by customer, phone or city..." [(ngModel)]="searchText" (input)="onSearch()">
+      <button *ngIf="searchText" class="clear-btn" (click)="searchText=''; onSearch()">&#10005;</button>
+    </div>
   </div>
-</div>
   <div *ngIf="!loading" class="main-content">
     <div class="metrics-grid">
       <div class="metric-card"><div class="metric-value">{{ metrics.totalLeads }}</div><div class="metric-label">TOTAL LEADS</div></div>
@@ -41,30 +41,23 @@
     </div>
     <div class="kanban-board">
       <h2 class="board-title">Lead Pipeline</h2>
-      <div class="columns-container">
+      <div class="columns-container" cdkDropListGroup>
         <div *ngFor="let column of columns" class="kanban-column">
           <div class="column-header" [style.borderTopColor]="column.accentColor"><h3>{{ column.title }}</h3><span class="column-count" [style.backgroundColor]="column.accentColor">{{ column.count }}</span></div>
-          <div
-            cdkDropList
-            [id]="column.id"
-            [cdkDropListData]="getLeadsByStatus(column.status)"
-            [cdkDropListConnectedTo]="['new', 'contacted', 'won', 'lost']"
-            class="drop-zone"
-            [class.disabled]="updating"
-            (cdkDropListDropped)="drop($event, column.status)">
-            <div *ngFor="let lead of getLeadsByStatus(column.status)" cdkDrag [cdkDragData]="lead" class="lead-card" [style.borderLeftColor]="column.accentColor" [class.dragging]="updating">
+          <div cdkDropList [id]="column.id" [cdkDropListData]="column.leads" class="drop-zone" [class.disabled]="updating" (cdkDropListDropped)="drop($event, column.status)">
+            <div *ngFor="let lead of column.leads" cdkDrag [cdkDragData]="lead" class="lead-card" [style.borderLeftColor]="column.accentColor" [class.dragging]="updating">
               <div class="card-header"><h4>{{ lead.customer }}</h4><span class="status-badge" [style.backgroundColor]="column.accentColor">{{ column.title }}</span></div>
               <div class="card-body">
                 <div class="card-field"><span class="field-label">Phone:</span><span class="field-value">{{ lead.phone }}</span></div>
                 <div class="card-field" *ngIf="lead.createdAt"><span class="field-label">Created:</span><span class="field-value">{{ lead.createdAt }}</span></div>
               </div>
               <div class="card-actions">
-                <button class="action-btn" title="View Details" (click)="openLead(lead)">👁️</button>
-                <button class="action-btn" title="Edit" (click)="openEditLead(lead)">✏️</button>
-                <button class="action-btn" title="Delete" (click)="confirmDelete(lead)">🗑️</button>
+                <button class="action-btn" title="View Details" (click)="openLead(lead)">&#128065;</button>
+                <button class="action-btn" title="Edit" (click)="openEditLead(lead)">&#9997;</button>
+                <button class="action-btn" title="Delete" (click)="confirmDelete(lead)">&#128465;</button>
               </div>
             </div>
-            <div *ngIf="getLeadsByStatus(column.status).length === 0" class="empty-state"><p>No leads here</p><small>Drag leads here to move them</small></div>
+            <div *ngIf="column.leads.length === 0" class="empty-state"><p>No leads here</p><small>Drag leads here to move them</small></div>
           </div>
         </div>
       </div>
@@ -72,7 +65,7 @@
   </div>
   <div *ngIf="updating" class="updating-overlay"><div class="spinner"></div><p>Updating lead...</p></div>
   <div class="lead-drawer" [class.open]="drawerOpen">
-    <div class="drawer-header"><h2>{{ selectedLead?.customer }}</h2><button class="action-btn" (click)="closeDrawer()">✕</button></div>
+    <div class="drawer-header"><h2>{{ selectedLead?.customer }}</h2><button class="action-btn" (click)="closeDrawer()">&#10005;</button></div>
     <div class="drawer-body" *ngIf="selectedLead">
       <p><strong>Phone:</strong> {{ selectedLead.phone }}</p>
       <p><strong>Email:</strong> {{ selectedLead.email || '-' }}</p>

@@ -33,14 +33,18 @@ export const authenticate = (
 
     const token = authHeader.split(" ")[1];
 
+    console.log("[AUTH] Verifying token...");
     const decoded = verifyToken(token);
+    console.log("[AUTH] Decoded:", decoded);
 
     req.user = decoded;
 
     next();
   } catch (error) {
+    console.error("[AUTH] Error:", error);
     res.status(401).json({
       message: "Invalid or expired token",
+      error: error instanceof Error ? error.message : "Unknown error"
     });
   }
 };

@@ -19,7 +19,8 @@ export async function createActivity(req: Request, res: Response) {
   try {
     const leadId = getParam(req.params.leadId);
     const { type, details } = req.body;
-    const userId = (req as any).user?.id || "system"; // fallback if no auth middleware
+    const userId = (req as any).user?.userId;
+    if (!userId) { return res.status(401).json({ error: "Unauthorized" }); }
 
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
@@ -61,7 +62,8 @@ export async function createLeadNote(req: Request, res: Response) {
   try {
     const leadId = getParam(req.params.leadId);
     const { content } = req.body;
-    const userId = (req as any).user?.id || "system"; // fallback if no auth middleware
+    const userId = (req as any).user?.userId;
+    if (!userId) { return res.status(401).json({ error: "Unauthorized" }); }
     
     const note = await prisma.leadNote.create({
       data: {
