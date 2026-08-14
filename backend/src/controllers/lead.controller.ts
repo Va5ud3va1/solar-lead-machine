@@ -4,8 +4,22 @@ import { getParam } from "../utils/params";
 
 export async function getLeads(req: Request, res: Response) {
   try {
-    console.log("DEBUG: Getting leads...");
+    console.log("DEBUG: Getting leads...", req.query);
+    const search = req.query.search as string | undefined;
+    const status = req.query.status as string | undefined;
+    const where: any = {};
+    if (status && status !== "ALL") { where.status = status; }
+    if (search && search.trim()) {
+      const searchTerm = search.trim();
+      where.OR = [
+        { customer: { contains: searchTerm, mode: "insensitive" } },
+        { phone: { contains: searchTerm, mode: "insensitive" } },
+        { city: { contains: searchTerm, mode: "insensitive" } },
+        { email: { contains: searchTerm, mode: "insensitive" } },
+      ];
+    }
     const leads = await prisma.lead.findMany({
+      where,
       include: {
         assignedTo: { select: { id: true, name: true, email: true } },
         _count: { select: { notes: true, activities: true, quotations: true } },
@@ -93,7 +107,24 @@ export async function updateLeadStatus(req: Request, res: Response) {
   try {
     const id = getParam(req.params.id);
     const { status } = req.body;
+    const currentLead = await prisma.lead.findUnique({ where: { id } });
+    if (!currentLead) return res.status(404).json({ error: "Lead not found" });
+    const oldStatus = currentLead.status;
     const lead = await prisma.lead.update({ where: { id }, data: { status } });
+    // Create activity log (non-fatal - status update succeeds even if this fails)
+    try {
+      const userId = (req as any).user?.userId;
+      await prisma.leadActivity.create({
+        data: {
+          type: "status_changed",
+          details: `Status changed from ${oldStatus} to ${status}`,
+          leadId: lead.id,
+          userId: userId || "system",
+        },
+      });
+    } catch (activityError: any) {
+      console.error("Activity log failed (non-fatal):", activityError.message);
+    }
     res.json(lead);
   } catch (error: any) {
     console.error("DEBUG ERROR:", error.message);

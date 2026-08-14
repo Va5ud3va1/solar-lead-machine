@@ -30,7 +30,7 @@
       <div class="chart-card"><app-charts [data]="statusChartData" title="Lead Status Overview" type="bar"></app-charts></div>
     </div>
     <div style="margin-bottom:20px">
-      <select [(ngModel)]="selectedStatus" (change)="onStatusChange()" style="padding:10px; border-radius:8px; border:1px solid #444; background:#1f2937; color:white;">
+      <select [(ngModel)]="selectedStatus" (change)="onSearch()" style="padding:10px; border-radius:8px; border:1px solid #444; background:#1f2937; color:white;">
         <option value="ALL">All Status</option><option value="NEW">New</option><option value="CONTACTED">Contacted</option><option value="WON">Won</option><option value="LOST">Lost</option>
       </select>
     </div>

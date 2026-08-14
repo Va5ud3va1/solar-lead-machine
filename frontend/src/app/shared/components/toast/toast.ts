@@ -1,6 +1,8 @@
-import { Component, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ToastService, Toast } from '../../../core/services/toast';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-toast',
@@ -9,17 +11,25 @@ import { ToastService, Toast } from '../../../core/services/toast';
   templateUrl: './toast.html',
   styleUrls: ['./toast.css']
 })
-export class ToastComponent {
+export class ToastComponent implements OnInit, OnDestroy {
   private toastService = inject(ToastService);
   private cdr = inject(ChangeDetectorRef);
+  private destroy$ = new Subject<void>();
 
   toasts: Toast[] = [];
 
-  constructor() {
-    this.toastService.toasts$.subscribe(toasts => {
+  ngOnInit(): void {
+    this.toastService.toasts$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(toasts => {
       this.toasts = toasts;
-      this.cdr.detectChanges();
+      setTimeout(() => this.cdr.detectChanges(), 0);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   dismiss(toast: Toast): void {

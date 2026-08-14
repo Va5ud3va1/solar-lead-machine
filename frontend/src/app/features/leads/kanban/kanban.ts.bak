@@ -32,27 +32,21 @@ export class KanbanComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void { 
     this.searchSubject.pipe(
-      debounceTime(800),
+      debounceTime(300),
       distinctUntilChanged(),
       takeUntil(this.destroy$)
-    ).subscribe(() => {
-      const trimmed = this.searchText ? this.searchText.trim() : "";
-      if (trimmed.length === 0 || trimmed.length >= 2) {
-        this.loadLeads();
-      }
-    });
+    ).subscribe(() => this.loadLeads());
     this.loadLeads(); 
   }
-  loadLeads(skipLoading: boolean = false): void {
-    if (!skipLoading) this.loading = true;
+  loadLeads(): void {
+    this.loading = true;
     this.leadService.filterLeads(this.searchText, this.selectedStatus).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (data: Lead[]) => { this.leads = data; this.sortLeads(); this.initializeColumns(); this.updateMetrics(); this.updateChartData(); if (!skipLoading) this.loading = false; this.cdr.detectChanges(); },
+      next: (data: Lead[]) => { this.leads = data; this.sortLeads(); this.initializeColumns(); this.updateMetrics(); this.updateChartData(); this.loading = false; this.cdr.detectChanges(); },
       error: (err) => { console.error(err); this.error = 'Failed to load leads'; this.toastService.error('Failed to load leads. Please try again.'); this.loading = false; this.cdr.detectChanges(); }
     });
   }
   onSearch(): void { this.searchSubject.next(this.searchText); }
   onSortChange(): void { this.sortLeads(); this.distributeLeadsToColumns(); }
-  onStatusChange(): void { this.loadLeads(true); }
 
   private sortLeads(): void {
     switch (this.sortOption) {
@@ -105,7 +99,7 @@ export class KanbanComponent implements OnInit, OnDestroy {
         this.updating = false; 
         this.toastService.success(`Lead "${result.customer}" moved to ${newStatus}`); 
         if (this.selectedLead && this.selectedLead.id === result.id && this.timelineRef) {
-          setTimeout(() => this.timelineRef.load(), 500);
+          this.timelineRef.load();
         }
         this.cdr.detectChanges(); 
       },
@@ -116,12 +110,12 @@ export class KanbanComponent implements OnInit, OnDestroy {
   openLead(lead: Lead): void { this.selectedLead = lead; this.drawerOpen = true; }
   closeDrawer(): void { this.drawerOpen = false; this.selectedLead = null; }
   confirmDelete(lead: Lead): void { this.leadToDelete = lead; this.deleteModalOpen = true; }
-  cancelDelete(): void { setTimeout(() => { this.deleteModalOpen = false; this.leadToDelete = null; }); }
+  cancelDelete(): void { this.deleteModalOpen = false; this.leadToDelete = null; }
 
   deleteLead(): void {
     if (!this.leadToDelete) return; const deletedLeadName = this.leadToDelete.customer;
     this.leadService.deleteLead(this.leadToDelete.id).subscribe({
-      next: () => { this.leads = this.leads.filter(l => l.id !== this.leadToDelete!.id); this.distributeLeadsToColumns(); this.updateColumnCounts(); this.updateMetrics(); this.updateChartData(); this.cancelDelete(); setTimeout(() => this.toastService.success(`Lead "${deletedLeadName}" deleted successfully`)); },
+      next: () => { this.leads = this.leads.filter(l => l.id !== this.leadToDelete!.id); this.distributeLeadsToColumns(); this.updateColumnCounts(); this.updateMetrics(); this.updateChartData(); this.cancelDelete(); this.toastService.success(`Lead "${deletedLeadName}" deleted successfully`); },
       error: err => { console.error(err); this.error = 'Failed to delete lead'; this.toastService.error(`Failed to delete "${deletedLeadName}". Please try again.`); this.cancelDelete(); }
     });
   }
