@@ -49,7 +49,8 @@
               <div class="card-header"><h4>{{ lead.customer }}</h4><span class="status-badge" [style.backgroundColor]="column.accentColor">{{ column.title }}</span></div>
               <div class="card-body">
                 <div class="card-field"><span class="field-label">Phone:</span><span class="field-value">{{ lead.phone }}</span></div>
-                <div class="card-field" *ngIf="lead.createdAt"><span class="field-label">Created:</span><span class="field-value">{{ lead.createdAt }}</span></div>
+                <div class="card-field" *ngIf="lead.city"><span class="field-label">City:</span><span class="field-value">{{ lead.city }}</span></div>
+                <div class="card-field" *ngIf="lead.createdAt"><span class="field-label">Created:</span><span class="field-value">{{ lead.createdAt | date:"dd MMM yyyy, h:mm a" }}</span></div>
               </div>
               <div class="card-actions">
                 <button class="action-btn" title="View Details" (click)="openLead(lead)">&#128065;</button>
@@ -71,8 +72,8 @@
       <p><strong>Email:</strong> {{ selectedLead.email || '-' }}</p>
       <p><strong>City:</strong> {{ selectedLead.city || '-' }}</p>
       <p><strong>Status:</strong> {{ selectedLead.status }}</p>
-      <p><strong>Created:</strong> {{ selectedLead.createdAt }}</p>
-      <p><strong>Updated:</strong> {{ selectedLead.updatedAt }}</p>
+      <p><strong>Created:</strong> {{ selectedLead.createdAt | date:"dd MMM yyyy, h:mm a" }}</p>
+      <p><strong>Updated:</strong> {{ selectedLead.updatedAt | date:"dd MMM yyyy, h:mm a" }}</p>
       <app-activity-timeline #timeline [leadId]="selectedLead.id"></app-activity-timeline>
       <app-note-form [leadId]="selectedLead.id" (added)="timeline.load()"></app-note-form>
     </div>
