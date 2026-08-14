@@ -50,4 +50,20 @@ app.use("/api/leads", activityRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 
+// TEMP: Seed admin user
+app.post("/api/seed-admin", async (req, res) => {
+  try {
+    const bcrypt = await import("bcrypt");
+    const hashed = await bcrypt.default.hash("password123", 10);
+    await prisma.user.upsert({
+      where: { email: "admin@solar.com" },
+      update: { password: hashed },
+      create: { name: "Admin", email: "admin@solar.com", password: hashed, role: "ADMIN" }
+    });
+    res.json({ message: "Admin user created/updated" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default app;
