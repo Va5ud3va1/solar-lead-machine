@@ -1,5 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
 .login-container {
   font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #0F172A 0%, #1a2d4d 50%, #0F172A 100%);
@@ -395,13 +407,18 @@
 
 /* Responsive */
 @media (max-width: 640px) {
+  .card-container {
+    padding: 10px;
+  }
+
   .card-glow {
-    padding: 36px 24px;
+    padding: 28px 16px;
+    border-radius: 16px;
   }
 
   .header h1,
   .header-sub {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .form-row {
@@ -412,5 +429,51 @@
 
   .forgot-link {
     align-self: flex-start;
+  }
+
+  .orb-1 {
+    width: 200px;
+    height: 200px;
+    top: -50px;
+    left: -50px;
+  }
+
+  .orb-2 {
+    width: 150px;
+    height: 150px;
+    bottom: -30px;
+    right: -30px;
+  }
+
+  .solar-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 380px) {
+  .card-glow {
+    padding: 20px 12px;
+  }
+
+  .header h1,
+  .header-sub {
+    font-size: 18px;
+  }
+
+  .glow-input {
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+
+  .neon-button,
+  .sso-button {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .header-tag {
+    font-size: 10px;
   }
 }
