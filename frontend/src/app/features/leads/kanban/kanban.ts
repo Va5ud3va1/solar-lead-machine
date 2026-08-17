@@ -20,11 +20,13 @@ interface Column { id: string; title: string; status: LeadStatus; count: number;
 @Component({ selector: 'app-kanban', standalone: true, imports: [ActivityTimelineComponent, NoteFormComponent, CommonModule, DragDropModule, FormsModule, ToastComponent, ChartsComponent, AddLead], templateUrl: './kanban.html', styleUrls: ['./kanban.css'] })
 export class KanbanComponent implements OnInit, OnDestroy {
   @ViewChild("timeline") timelineRef!: any;
-  leads: Lead[] = []; columns: Column[] = []; metrics = { totalLeads: 0, newLeads: 0, contacted: 0, won: 0 };
+  leads: Lead[] = []; columns: Column[] = []; metrics = { totalLeads: 0, newLeads: 0, contacted: 0, won: 0, lost: 0 };
   loading = true; updating = false; error = ''; searchText = ''; selectedStatus = 'ALL'; sortOption = 'NEWEST';
   currentPage = 1; pageSize = 10; drawerOpen = false; selectedLead: Lead | null = null;
-  deleteModalOpen = false; leadToDelete: Lead | null = null; statusChartData: ChartData[] = [];
-  addLeadOpen = false; leadToEdit: Lead | null = null; private destroy$ = new Subject<void>();
+  deleteModalOpen = false; viewModalOpen = false; leadToDelete: Lead | null = null; statusChartData: ChartData[] = [];
+  addLeadOpen = false; leadToEdit: Lead | null = null; dayMode = false; private destroy$ = new Subject<void>();
+
+  toggleDayMode(): void { this.dayMode = !this.dayMode; }
 
   constructor(private leadService: LeadService, private toastService: ToastService, private cdr: ChangeDetectorRef, private auth: Auth, private router: Router) {}
 
@@ -79,7 +81,7 @@ export class KanbanComponent implements OnInit, OnDestroy {
 
   updateColumnCounts(): void { this.columns.forEach(col => { col.count = col.leads.length; }); }
   getLeadsByStatus(status: LeadStatus): Lead[] { const col = this.columns.find(c => c.status === status); return col ? col.leads : []; }
-  updateMetrics(): void { this.metrics.totalLeads = this.leads.length; this.metrics.newLeads = this.leads.filter(l => l.status === 'NEW').length; this.metrics.contacted = this.leads.filter(l => l.status === 'CONTACTED').length; this.metrics.won = this.leads.filter(l => l.status === 'WON').length; }
+  updateMetrics(): void { this.metrics.totalLeads = this.leads.length; this.metrics.newLeads = this.leads.filter(l => l.status === 'NEW').length; this.metrics.contacted = this.leads.filter(l => l.status === 'CONTACTED').length; this.metrics.won = this.leads.filter(l => l.status === 'WON').length; this.metrics.lost = this.leads.filter(l => l.status === 'LOST').length; }
   updateChartData(): void { this.statusChartData = [{ label: 'New', value: this.metrics.newLeads, color: '#00ff88' },{ label: 'Contacted', value: this.metrics.contacted, color: '#00d4ff' },{ label: 'Won', value: this.metrics.won, color: '#ffd700' },{ label: 'Lost', value: this.leads.filter(l => l.status === 'LOST').length, color: '#ff1744' }]; }
 
   openAddLead(): void { this.leadToEdit = null; this.addLeadOpen = true; }
@@ -117,6 +119,28 @@ export class KanbanComponent implements OnInit, OnDestroy {
   closeDrawer(): void { this.drawerOpen = false; this.selectedLead = null; }
   confirmDelete(lead: Lead): void { this.leadToDelete = lead; this.deleteModalOpen = true; }
   cancelDelete(): void { setTimeout(() => { this.deleteModalOpen = false; this.leadToDelete = null; }); }
+
+  openViewModal(lead: Lead): void { this.selectedLead = lead; this.viewModalOpen = true; }
+  closeViewModal(): void { this.viewModalOpen = false; this.selectedLead = null; }
+
+  copyText(text: string, label: string): void {
+    if (!text || text === '-') return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.toastService.success(`${label} copied to clipboard`);
+    }).catch(() => {
+      this.toastService.error(`Failed to copy ${label}`);
+    });
+  }
+
+  getStatusColor(status: string): string {
+    switch(status) {
+      case 'NEW': return '#00ff88';
+      case 'CONTACTED': return '#00d4ff';
+      case 'WON': return '#ffd700';
+      case 'LOST': return '#ff1744';
+      default: return '#64748b';
+    }
+  }
 
   deleteLead(): void {
     if (!this.leadToDelete) return; const deletedLeadName = this.leadToDelete.customer;
